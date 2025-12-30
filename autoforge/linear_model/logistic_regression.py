@@ -121,5 +121,3 @@ class LogisticRegression(BaseEstimator):
         """
         # Predict probabilities and convert to binary output using 0.5 threshold
         return (self.predict_proba(X) >= 0.5).astype(int)
-
-

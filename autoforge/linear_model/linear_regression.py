@@ -86,3 +86,4 @@ class LinearRegression(BaseEstimator):
         predict = X @ self.theta
 
         return predict
+
