@@ -14,16 +14,26 @@ def check_forward_backward(actfun):
 
 @check_forward_backward
 class Relu:
-    # @staticmethod
-    def forward(self, X):
+    @staticmethod
+    def forward(X):
         return np.maximum(0, X)
 
-    # @staticmethod
-    def backward(self, X):
+    @staticmethod
+    def backward(X):
         return (X > 0).astype(float)
 
 
 @check_forward_backward
+class Sigmoid:
+    def forward(self, X):
+        return 1 / (1 + np.exp(-X))
+
+    def backward(self, X):
+        A = self.forward(X)
+        return A * (1 - A)
+
+
+# Legacy support - for backwards compatibility
 class sigmoid:
     @staticmethod
     def forward(X):
@@ -32,6 +42,10 @@ class sigmoid:
     @staticmethod
     def backward(X):
         A = sigmoid.forward(X)
-        return A * (1 - A)
+        return A
 
 
+ACTIVATIONS = {
+    "relu": Relu,
+    "sigmoid": Sigmoid,
+}
