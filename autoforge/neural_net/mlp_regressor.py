@@ -35,13 +35,20 @@ class MLPRegressor(BaseEstimator):
     """
 
     def __init__(
-        self, hidden_layer_size, learning_rate, activation, max_iter, random_state
+        self,
+        hidden_layer_size,
+        learning_rate,
+        activation,
+        max_iter,
+        random_state,
+        batch_size,
     ) -> None:
         self.hidden_layer_size = hidden_layer_size
         self.lr = learning_rate
         self.activation = activation
         self.max_iter = max_iter
         self.random_state = random_state
+        self.batch_size = batch_size
 
     def _initialize_weight(self, n_features):
         """Initialize weights and biases for all network layers."""
@@ -106,7 +113,7 @@ class MLPRegressor(BaseEstimator):
     def fit(self, X, y):
         """Train the neural network on input data."""
         y = y.reshape(-1, 1)
-        n_features = X.shape[1]
+        n_samples, n_features = X.shape
 
         self.activation_func = ACTIVATIONS[self.activation]
 
@@ -114,15 +121,33 @@ class MLPRegressor(BaseEstimator):
         self._initialize_weight(n_features)
         # Training loop
         for epoch in range(self.max_iter):
-            self.y_hat = self._forward_pass(X, predict=False)
+            idx = np.random.permutation(n_samples)
 
-            loss = np.mean((y - self.y_hat) ** 2)
+            X_shuffled = X[idx]
+            y_shuffled = y[idx]
 
-            self._backward_pass(X, y, self.y_hat)
+            epoch_loss = 0
+            n_batches = 0
+
+            for i in range(0, n_samples, self.batch_size):
+                end_idx = min(i + self.batch_size, n_samples)
+
+                X_batch = X_shuffled[i:end_idx]
+                y_batch = y_shuffled[i:end_idx]
+                y_hat = self._forward_pass(X_batch, predict=False)
+
+                batch_loss = np.mean((y_batch - y_hat) ** 2)
+
+                epoch_loss += batch_loss
+                n_batches += 1
+
+                self._backward_pass(X_batch, y_batch, y_hat)
+
+            avg_loss = epoch_loss / n_batches
 
             if epoch % 100 == 0:
-                print(f"Epoch {epoch} | Loss {loss:.4f}")
-        
+                print(f"Epoch {epoch} | Loss {avg_loss:.4f}")
+
         self._mark_fitted()
         return self
 
@@ -136,7 +161,7 @@ class MLPRegressor(BaseEstimator):
         return A.flatten()
 
     def score(self, X, y):
-        """ Return the coefficient of determination R^2 of the prediction. """
+        """Return the coefficient of determination R^2 of the prediction."""
         y_pred = self.predict(X)
         y = np.asarray(y)
 

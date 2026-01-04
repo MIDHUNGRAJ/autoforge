@@ -37,12 +37,14 @@ class MLPClassifier(BaseEstimator):
         learning_rate=0.01,
         max_iter=200,
         random_state=None,
+        batch_size=32,
     ):
         self.hidden_layer_sizes = hidden_layer_sizes
         self.activation = activation
         self.lr = learning_rate
         self.max_iter = max_iter
         self.random_state = random_state
+        self.batch_size = batch_size
 
     def _initialize_weight(self, n_features):
         """Initialize network weights"""
@@ -91,7 +93,7 @@ class MLPClassifier(BaseEstimator):
         return A
 
     def _backward_pass(self, X, y, y_pred):
-        """ Perform backpropagation to compute gradients and update weights. """
+        """Perform backpropagation to compute gradients and update weights."""
         m = X.shape[0]
 
         # Compute output gradient
@@ -113,47 +115,68 @@ class MLPClassifier(BaseEstimator):
             self.bias[i] -= self.lr * db
 
     def fit(self, X, y):
-        """ Fit the MLP classifier to training data. """
+        """Fit the MLP classifier to training data."""
         y = y.reshape(-1, 1)
 
         self.activation_func = ACTIVATIONS[self.activation]
         # print(_activ)
 
         # Initialize components
-        n_features = X.shape[1]
+        n_samples, n_features = X.shape
 
         # Intiaialize weights
         self._initialize_weight(n_features)
         # Training Loop
         for epoch in range(self.max_iter):
-            y_hat = self._forward_pass(X, predict=False)
+            idx = np.random.permutation(n_samples)
 
-            loss = -np.mean(
-                y * np.log(y_hat + 1e-8) + (1 - y) * np.log(1 - y_hat + 1e-8)
-            )
-            self._backward_pass(X, y, y_hat)
+            X_shuffled = X[idx]
+            y_shuffled = y[idx]
+
+            epoch_loss = 0
+            n_batches = 0
+
+            for i in range(0, n_samples, self.batch_size):
+                end_idx = min(i + self.batch_size, n_samples)
+                X_batch = X_shuffled[i:end_idx]
+                y_batch = y_shuffled[i:end_idx]
+
+                y_hat = self._forward_pass(X_batch, predict=False)
+
+                batch_loss = -np.mean(
+                    y_batch * np.log(y_hat + 1e-8)
+                    + (1 - y_batch) * np.log(1 - y_hat + 1e-8)
+                )
+                self._backward_pass(X_batch, y_batch, y_hat)
+
+                epoch_loss += batch_loss
+                n_batches += 1
+
+            avg_loss = epoch_loss / n_batches
 
             if epoch % 100 == 0:
-                print(f"Epoch {epoch} | Loss {loss:.4f}")
-        
+                print(f"Epoch {epoch} | Loss {avg_loss:.4f}")
+
         self._mark_fitted()
         return self
 
     @require_fit
     def predict(self, X):
-        """ Predict binary class labels for samples."""
+        """Predict binary class labels for samples."""
         X = np.asarray(X)
 
         return (self._predict_proba(X) > 0.5).astype(int).flatten()
 
     def _predict_proba(self, X):
-        """ Predict class probabilities for samples."""
+        """Predict class probabilities for samples."""
         # Forward pass without storing activations (memory efficient)
         A = self._forward_pass(X, predict=True)
         return A
 
     def score(self, X, y):
-        """ Return the mean accuracy on the given test data and labels. """
+        """Return the mean accuracy on the given test data and labels."""
         y_pred = self.predict(X)
         return np.mean(y_pred == y)
+
+
 # End
