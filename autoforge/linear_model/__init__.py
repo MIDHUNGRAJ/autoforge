@@ -1,5 +1,6 @@
 from .linear_regression import LinearRegression
 from .sgd_regression import SGDRegressor
+from .sgd_classifier import SGDClassifier
 from .logistic_regression import LogisticRegression
 from .ridge_regression import RidgeRegression
 from .lasso_regression import Lasso
