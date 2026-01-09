@@ -29,10 +29,11 @@ class SGDRegressor(BaseEstimator):
         Intercept (bias) term. None if fit_intercept=False.
     """
 
-    def __init__(self, learning_rate, fit_intercept=True, max_iter=1000):
+    def __init__(self, learning_rate, fit_intercept=True, max_iter=1000, momentum=0.0):
         self.learning_rate = learning_rate
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
+        self.momentum = momentum
 
     def fit(self, X, y):
         """
@@ -57,6 +58,9 @@ class SGDRegressor(BaseEstimator):
         self.coef_ = np.zeros(n_features)
         self.intercept_ = 0.0 if self.fit_intercept else None
 
+        self.v_w = np.zeros(n_features)
+        self.v_b = 0.0 if self.fit_intercept else None
+
         for epoch in range(self.max_iter):
             for i in range(n_samples):
                 xi = X[i]
@@ -70,11 +74,16 @@ class SGDRegressor(BaseEstimator):
                 error = y_pred - yi
 
                 # Update coefficients
-                self.coef_ -= self.learning_rate * error * xi
+                grad_w = (2 / len(xi)) * xi.T * error
+                grad_b = (2 / len(xi)) * np.sum(y_pred - yi)
 
+                self.v_w = self.momentum * self.v_w + self.learning_rate * grad_w
+                self.v_b = self.momentum * self.v_b + self.learning_rate * grad_b
+
+                self.coef_ -= self.v_w
                 # Update intercept if applicable
                 if self.fit_intercept:
-                    self.intercept_ -= self.learning_rate * error
+                    self.intercept_ -= self.v_b
 
         self._mark_fitted()
         return self
