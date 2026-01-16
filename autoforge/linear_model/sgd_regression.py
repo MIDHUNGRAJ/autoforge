@@ -29,11 +29,19 @@ class SGDRegressor(BaseEstimator):
         Intercept (bias) term. None if fit_intercept=False.
     """
 
-    def __init__(self, learning_rate, fit_intercept=True, max_iter=1000, momentum=0.0):
+    def __init__(
+        self,
+        learning_rate,
+        fit_intercept=True,
+        max_iter=1000,
+        momentum=0.0,
+        nesterov=True,
+    ):
         self.learning_rate = learning_rate
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
         self.momentum = momentum
+        self.nag = nesterov
 
     def fit(self, X, y):
         """
@@ -66,10 +74,18 @@ class SGDRegressor(BaseEstimator):
                 xi = X[i]
                 yi = y[i]
 
-                # Compute linear prediction
-                y_pred = np.dot(xi, self.coef_)
-                if self.fit_intercept:
-                    y_pred += self.intercept_
+                if self.nag:
+                    coef_lookahead = self.coef_ - self.momentum * self.v_w
+                    intercept_lookahead = self.intercept_ - self.momentum * self.v_b
+
+                    y_pred = np.dot(xi, coef_lookahead)
+                    if self.fit_intercept:
+                        y_pred += intercept_lookahead
+
+                else:
+                    y_pred = np.dot(xi, self.coef_)
+                    if self.fit_intercept:
+                        y_pred += self.intercept_
 
                 error = y_pred - yi
 
@@ -78,7 +94,8 @@ class SGDRegressor(BaseEstimator):
                 grad_b = (2 / len(xi)) * np.sum(y_pred - yi)
 
                 self.v_w = self.momentum * self.v_w + self.learning_rate * grad_w
-                self.v_b = self.momentum * self.v_b + self.learning_rate * grad_b
+                if self.fit_intercept:
+                    self.v_b = self.momentum * self.v_b + self.learning_rate * grad_b
 
                 self.coef_ -= self.v_w
                 # Update intercept if applicable
