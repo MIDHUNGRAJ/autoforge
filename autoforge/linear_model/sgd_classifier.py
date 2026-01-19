@@ -6,11 +6,19 @@ from autoforge.base import BaseEstimator, require_fit
 class SGDClassifier(BaseEstimator):
     """ """
 
-    def __init__(self, learning_rate=0.01, max_iter=100, batch_size=32, momentum=0.0):
+    def __init__(
+        self,
+        learning_rate=0.01,
+        max_iter=100,
+        batch_size=32,
+        momentum=0.0,
+        nesterov=True,
+    ):
         self.lr = learning_rate
         self.max_iter = max_iter
         self.batch_size = batch_size
         self.momentum = momentum  # setting momentum to zero, normal SGD
+        self.nag = nesterov
 
     def fit(self, X, y):
         n_samples, n_features = X.shape
@@ -31,9 +39,16 @@ class SGDClassifier(BaseEstimator):
                 Xi = X_batch[i:end_idx]
                 yi = y_batch[i:end_idx]
 
-                y_pred = Xi @ self.weight + self.bias
+                if self.nag:
+                    weight_lookahead = self.weight - self.momentum * self.v_w
+                    bias_lookahead = self.bias - self.momentum * self.v_b
 
-                y_pred = sigmoid(y_pred)
+                    y_pred = Xi @ weight_lookahead + bias_lookahead
+                    y_pred = sigmoid(y_pred)
+
+                else:
+                    y_pred = Xi @ self.weight + self.bias
+                    y_pred = sigmoid(y_pred)
 
                 grad_w = (2 / len(Xi)) * Xi.T @ (y_pred - yi)
                 grad_b = (2 / len(Xi)) * np.sum(y_pred - yi)
