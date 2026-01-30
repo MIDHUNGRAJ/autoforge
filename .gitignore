@@ -1,5 +1,5 @@
 .vscode
-__pycache__
-testing
+__pycache__/
+testing/
 .ipynb_checkpoints
 *.egg-info/
