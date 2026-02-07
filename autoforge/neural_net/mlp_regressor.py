@@ -42,6 +42,7 @@ class MLPRegressor(BaseEstimator):
         max_iter,
         random_state,
         batch_size,
+        solver,
     ) -> None:
         self.hidden_layer_size = hidden_layer_size
         self.lr = learning_rate
@@ -49,6 +50,7 @@ class MLPRegressor(BaseEstimator):
         self.max_iter = max_iter
         self.random_state = random_state
         self.batch_size = batch_size
+        self.solver = solver
 
     def _initialize_weight(self, n_features):
         """Initialize weights and biases for all network layers."""
@@ -66,6 +68,16 @@ class MLPRegressor(BaseEstimator):
 
             self.weight.append(w)
             self.bias.append(b)
+
+        self.m_w = [np.zeros_like(w) for w in self.weight]
+        self.v_w = [np.zeros_like(w) for w in self.weight]
+        self.m_b = [np.zeros_like(b) for b in self.bias]
+        self.v_b = [np.zeros_like(b) for b in self.bias]
+        self.t = 0
+
+        self.beta1 = 0.9
+        self.beta2 = 0.999
+        self.eps = 1e-8
 
     def _forward_pass(self, X, predict=False):
         """Run a forward pass through the network."""
@@ -93,7 +105,7 @@ class MLPRegressor(BaseEstimator):
 
         return A
 
-    def _backward_pass(self, X, y, y_pred):
+    def _backward_pass_sgd(self, X, y, y_pred):
         """Run backpropagation and update weights."""
         m = X.shape[0]
 
@@ -109,6 +121,47 @@ class MLPRegressor(BaseEstimator):
 
             self.weight[i] -= self.lr * dw
             self.bias[i] -= self.lr * db
+
+    def _backward_pass_adam(self, X, y, y_pred):
+        """Run backpropagation and update weights."""
+        m = X.shape[0]
+
+        dz = (y_pred - y) / m
+
+        grad_w = []
+        grad_b = []
+
+        self.t += 1
+
+        for i in reversed(range(len(self.weight))):
+            dw = self.As[i].T @ dz
+            db = dz.sum(axis=0, keepdims=True)
+
+            grad_w.insert(0, dw)
+            grad_b.insert(0, db)
+
+            if i > 0:
+                da = dz @ self.weight[i].T
+                dz = da * self.activation_func.backward(self.Zs[i - 1])
+
+        for i in range(len(self.weight)):
+            dw = grad_w[i]
+            db = grad_b[i]
+
+            self.m_w[i] = self.beta1 * self.m_w[i] + (1 - self.beta1) * dw
+            self.v_w[i] = self.beta2 * self.v_w[i] + (1 - self.beta2) * db**2
+
+            self.m_b[i] = self.beta1 * self.m_b[i] + (1 - self.beta1) * db
+            self.v_b[i] = self.beta2 * self.v_b[i] + (1 - self.beta2) * db**2
+
+            m_w_hat = self.m_w[i] / (1 - self.beta1**self.t)
+            v_w_hat = self.v_b[i] / (1 - self.beta2**self.t)
+
+            m_b_hat = self.m_b[i] / (1 - self.beta1**self.t)
+            v_b_hat = self.v_b[i] / (1 - self.beta2**self.t)
+
+            self.weight[i] -= (self.lr * m_w_hat) / (np.sqrt(v_w_hat) + self.eps)
+            self.bias[i] -= (self.lr * m_b_hat) / (np.sqrt(v_b_hat) + self.eps)
 
     def fit(self, X, y):
         """Train the neural network on input data."""
@@ -141,7 +194,10 @@ class MLPRegressor(BaseEstimator):
                 epoch_loss += batch_loss
                 n_batches += 1
 
-                self._backward_pass(X_batch, y_batch, y_hat)
+                if self.solver == "adam":
+                    self._backward_pass_adam(X_batch, y_batch, y_hat)
+                elif self.solver == "sgd":
+                    self._backward_pass_sgd(X_batch, y_batch, y_hat)
 
             avg_loss = epoch_loss / n_batches
 
