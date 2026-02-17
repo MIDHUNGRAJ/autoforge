@@ -7,7 +7,7 @@ AutoForge prioritizes **clarity, readability, and learning** over performance or
 
 ---
 
-## 🎯 Purpose
+## Purpose
 
 Most machine learning libraries focus on usability and speed, hiding internal mechanics.  
 AutoForge takes the opposite approach:
@@ -21,7 +21,7 @@ This project exists primarily as a **learning tool**.
 
 ---
 
-## 👥 Who Is This For?
+## Who Is This For?
 
 ### AutoForge is for:
 - Beginners learning machine learning fundamentals
@@ -37,18 +37,16 @@ This project exists primarily as a **learning tool**.
 
 ---
 
-## 🧠 Design Philosophy
+## Design Philosophy
 
 - **Educational first** – clarity over optimization  
 - **Minimal abstraction** – no unnecessary layers  
 - **From scratch** – core logic implemented manually  
 - **Sklearn-inspired API** – familiar, but not compatible  
 
-> The API may resemble scikit-learn, but this library is **not a drop-in replacement**.
-
 ---
 
-## 📦 Installation
+## Installation
 
 Clone and install locally:
 
@@ -58,7 +56,7 @@ cd autoforge
 pip install -e .
 ```
 
-## 🛠️ Example Usage
+## Example Usage
 
 Linear Regression
 
@@ -82,7 +80,7 @@ y_pred = model.predict(X)
 print(f"MSE: {mean_squared_error(y, y_pred)}")
 
 ```
-## 🤝 Contributing
+## Contributing
 
 This project welcomes educational contributions.
 
@@ -100,7 +98,7 @@ Steps:
 
 ---
 
-## ⚠️ Disclaimer
+## Disclaimer
 
 AutoForge is a **learning project**.
 
@@ -112,7 +110,7 @@ AutoForge is a **learning project**.
 
 ---
 
-## 📄 License
+## License
 
 Licensed under the **MIT License**.
 
