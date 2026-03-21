@@ -42,6 +42,11 @@ class DecisionTreeClassifier:
         feature_idx = list(range(data.shape[1] - 1))
         mx_info_gain = -1e-10
 
+        left_split = None
+        right_split = None
+        best_feature = None
+        best_threshold = None
+
         y = data[:, -1]
         for idx in feature_idx:
             feature_values = data[:, idx]

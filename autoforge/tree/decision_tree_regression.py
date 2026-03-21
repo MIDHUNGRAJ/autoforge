@@ -4,19 +4,19 @@ from ._nodes import TreeNode
 
 
 class DecisionTreeRegressor:
-    def __init__(self, max_depth=4, criterion="mse"):
+    def __init__(self, max_depth=4, criterion="mse", min_samples_split=1):
         self.max_depth = max_depth
         self.criterion = criterion
-        self.min_samples_leaf = 1
+        self.min_samples_split = min_samples_split
 
     def _build_tree(self, data, current_depth=0):
         min_samples, min_features = data.shape
 
-        if current_depth <= self.max_depth and min_samples >= self.min_samples_leaf:
+        if current_depth <= self.max_depth and min_samples >= self.min_samples_split:
             left_split, right_split, best_threshold, best_feature, ctrn = (
                 self.find_best_split(data)
             )
-            if ctrn > 0:
+            if left_split is not None and right_split is not None:
                 current_depth += 1
                 left_data = self._build_tree(left_split, current_depth)
                 right_data = self._build_tree(right_split, current_depth)
@@ -41,10 +41,18 @@ class DecisionTreeRegressor:
 
         best_criterion_value = np.inf if self.criterion == "mse" else -np.inf
 
+        left_split = None
+        right_split = None
+        best_feature = None
+        best_threshold = None
+
         for idx in feature_idx:
             threshold = np.percentile(data[:, idx], q=np.arange(25, 100, 25))
             for tsd in threshold:
                 left_g1, right_g2 = self.split_data(data, idx, tsd)
+
+                if len(left_g1) == 0 or len(right_g2) == 0:
+                    continue
 
                 if self.criterion == "mse":
                     criterion_value = self._calculate_mse(
