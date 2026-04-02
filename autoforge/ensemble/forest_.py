@@ -1,6 +1,10 @@
 import numpy as np
 from collections import Counter
+<<<<<<< HEAD
 from autoforge.tree import DecisionTreeClassifier, DecisionTreeRegressor
+=======
+from autoforge.tree import DecisionTreeClassifier
+>>>>>>> 3a78861 (add KNN)
 
 
 class RandomForestClassifier:
@@ -34,6 +38,7 @@ class RandomForestClassifier:
         tree_preds = np.swapaxes(predictions, 0, 1)
         predictions = np.array([self.most_common_label(pred) for pred in tree_preds])
         return predictions
+<<<<<<< HEAD
 
 
 class RandomForestRegressor:
@@ -67,3 +72,5 @@ class RandomForestRegressor:
         tree_preds = np.swapaxes(predictions, 0, 1)
         predictions = np.array([np.mean(pred) for pred in tree_preds])
         return predictions
+=======
+>>>>>>> 3a78861 (add KNN)
