@@ -48,8 +48,12 @@ This project exists primarily as a **learning tool**.
 
 ## Installation
 
-Clone and install locally:
+### Using Docker (Recommended)
+```bash
+docker run -it neurobytemind/autoforge
+```
 
+### Clone and install locally
 ```bash
 git clone https://github.com/MIDHUNGRAJ/autoforge.git
 cd autoforge
